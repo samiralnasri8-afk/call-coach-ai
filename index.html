@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>AI Call Coach</title>
+
+<style>
+body{
+  margin:0;
+  background:#0b1020;
+  color:white;
+  font-family:Arial,sans-serif;
+}
+.container{
+  max-width:650px;
+  margin:auto;
+  padding:16px;
+}
+.card{
+  background:#151c31;
+  border-radius:16px;
+  padding:16px;
+  margin-bottom:14px;
+}
+h1{
+  margin:0 0 6px;
+}
+.status{
+  background:#202a43;
+  padding:12px;
+  border-radius:10px;
+  margin:12px 0;
+}
+button{
+  padding:13px 16px;
+  border:0;
+  border-radius:10px;
+  font-weight:bold;
+  margin:4px;
+}
+.start{background:#22c55e;}
+.stop{background:#ef4444;color:white;}
+.clear{background:#475569;color:white;}
+.label{
+  font-weight:bold;
+  margin-bottom:8px;
+}
+.box{
+  background:#0d1427;
+  padding:14px;
+  border-radius:12px;
+  min-height:45px;
+  line-height:1.5;
+}
+.say{
+  font-size:20px;
+  font-weight:bold;
+  border:1px solid #3b82f6;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="card">
+
+<h1>🎧 AI Call Coach</h1>
+
+<div>
+Real Estate Wholesaling Live Coach
+</div>
+
+<div id="status" class="status">
+Ready — Start Listening
+</div>
+
+<button class="start" onclick="startListening()">
+🎙️ Start Listening
+</button>
+
+<button class="stop" onclick="stopListening()">
+⏹ Stop
+</button>
+
+<button class="clear" onclick="clearAll()">
+🗑 Clear
+</button>
+
+</div>
+
+
+<div class="card">
+
+<div class="label">
+👤 WHAT THEY SAID
+</div>
+
+<div id="heard" class="box">
+Waiting...
+</div>
+
+</div>
+
+
+<div class="card">
+
+<div class="label">
+🇸🇴 MEANING
+</div>
+
+<div id="meaning" class="box">
+Waiting...
+</div>
+
+</div>
+
+
+<div class="card">
+
+<div class="label">
+🗣️ ONLY WHAT TO SAY
+</div>
+
+<div id="say" class="box say">
+Waiting...
+</div>
+
+</div>
+
+
+<div class="card">
+
+<div class="label">
+📝 TRANSCRIPT
+</div>
+
+<div id="transcript" class="box">
+</div>
+
+</div>
+
+</div>
+
+
+<script>
+
+let recognition;
+let listening = false;
+
+
+function startListening(){
+
+const SpeechRecognition =
+window.SpeechRecognition ||
+window.webkitSpeechRecognition;
+
+if(!SpeechRecognition){
+
+document.getElementById("status").innerText =
+"Speech recognition is not supported. Use Chrome.";
+
+return;
+}
+
+
+recognition = new SpeechRecognition();
+
+recognition.continuous = true;
+recognition.interimResults = true;
+recognition.lang = "en-US";
+
+
+recognition.onstart = function(){
+
+listening = true;
+
+document.getElementById("status").innerText =
+"🟢 Listening... Put your call on speakerphone.";
+
+};
+
+
+recognition.onresult = function(event){
+
+let text = "";
+
+for(let i = event.resultIndex;
+i < event.results.length;
+i++){
+
+text += event.results[i][0].transcript;
+
+}
+
+if(text.trim()){
+
+coach(text.trim());
+
+}
+
+};
+
+
+recognition.onerror = function(event){
+
+document.getElementById("status").innerText =
+"Error: " + event.error;
+
+};
+
+
+recognition.onend = function(){
+
+if(listening){
+
+try{
+recognition.start();
+}catch(e){}
+
+}
+
+};
+
+
+try{
+
+recognition.start();
+
+}catch(e){}
+
+}
+
+
+function stopListening(){
+
+listening = false;
+
+if(recognition){
+
+recognition.stop();
+
+}
+
+document.getElementById("status").innerText =
+"Stopped.";
+
+}
+
+
+function coach(text){
+
+document.getElementById("heard").innerText =
+text;
+
+document.getElementById("transcript").innerText +=
+text + "\n";
+
+
+let t = text.toLowerCase();
+
+let meaning =
+"Waxay ka hadlayaan property-ga ama deal-ka.";
+
+let say =
+"I understand. Can you tell me a little more about the property?";
+
+
+if(
+t.includes("price") ||
+t.includes("asking") ||
+t.includes("want") ||
+t.includes("offer") ||
+t.includes("dollar") ||
+t.includes("$")
+){
+
+meaning =
+"Waxay ka hadlayaan qiimaha property-ga.";
+
+say =
+"I understand. Is that price negotiable?";
+
+}
+
+
+else if(
+t.includes("repair") ||
+t.includes("condition") ||
+t.includes("roof") ||
+t.includes("damage") ||
+t.includes("fix")
+){
+
+meaning =
+"Waxay ka hadlayaan xaaladda guriga iyo repairs-ka.";
+
+say =
+"Got it. What repairs does the property need?";
+
+}
+
+
+else if(
+t.includes("tenant") ||
+t.includes("rent") ||
+t.includes("rented")
+){
+
+meaning =
+"Waxay ka hadlayaan tenant ama kirayste.";
+
+say =
+"Got it. Is the property currently occupied?";
+
+}
+
+
+else if(
+t.includes("sell") ||
+t.includes("selling") ||
+t.includes("move") ||
+t.includes("moving")
+){
+
+meaning =
+"Waxay ka hadlayaan iibinta property-ga ama sababta ay u iibinayaan.";
+
+say =
+"I understand. What is your timeline for selling?";
+
+}
+
+
+else if(
+t.includes("mortgage") ||
+t.includes("loan") ||
+t.includes("owe") ||
+t.includes("lien")
+){
+
+meaning =
+"Waxay ka hadlayaan mortgage ama lacag property-ga lagu leeyahay.";
+
+say =
+"I understand. About how much is still owed on the property?";
+
+}
+
+
+else if(
+t.includes("closing") ||
+t.includes("close")
+){
+
+meaning =
+"Waxay ka hadlayaan waqtiga closing-ka.";
+
+say =
+"What closing timeline would work for you?";
+
+}
+
+
+document.getElementById("meaning").innerText =
+meaning;
+
+document.getElementById("say").innerText =
+say;
+
+}
+
+
+function clearAll(){
+
+document.getElementById("heard").innerText =
+"Waiting...";
+
+document.getElementById("meaning").innerText =
+"Waiting...";
+
+document.getElementById("say").innerText =
+"Waiting...";
+
+document.getElementById("transcript").innerText =
+"";
+
+}
+
+</script>
+
+</body>
+  </html>
