@@ -1,63 +1,127 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>AI Call Coach</title>
+<title>AI Real Estate Call Coach</title>
 
 <style>
-body{
-  margin:0;
-  background:#0b1020;
-  color:white;
-  font-family:Arial,sans-serif;
+* {
+  box-sizing: border-box;
 }
-.container{
-  max-width:650px;
-  margin:auto;
-  padding:16px;
+
+body {
+  margin: 0;
+  background: #0b1020;
+  color: white;
+  font-family: Arial, sans-serif;
 }
-.card{
-  background:#151c31;
-  border-radius:16px;
-  padding:16px;
-  margin-bottom:14px;
+
+.container {
+  max-width: 700px;
+  margin: auto;
+  padding: 16px;
 }
-h1{
-  margin:0 0 6px;
+
+h1 {
+  text-align: center;
+  margin-bottom: 5px;
 }
-.status{
-  background:#202a43;
-  padding:12px;
-  border-radius:10px;
-  margin:12px 0;
+
+.subtitle {
+  text-align: center;
+  color: #9ca3af;
+  margin-bottom: 20px;
 }
-button{
-  padding:13px 16px;
-  border:0;
-  border-radius:10px;
-  font-weight:bold;
-  margin:4px;
+
+.card {
+  background: #151c30;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 15px;
+  border: 1px solid #27314d;
 }
-.start{background:#22c55e;}
-.stop{background:#ef4444;color:white;}
-.clear{background:#475569;color:white;}
-.label{
-  font-weight:bold;
-  margin-bottom:8px;
+
+.status {
+  text-align: center;
+  padding: 12px;
+  border-radius: 10px;
+  background: #202941;
+  margin-bottom: 15px;
 }
-.box{
-  background:#0d1427;
-  padding:14px;
-  border-radius:12px;
-  min-height:45px;
-  line-height:1.5;
+
+button {
+  border: none;
+  border-radius: 10px;
+  padding: 13px 16px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  margin: 4px;
 }
-.say{
-  font-size:20px;
-  font-weight:bold;
-  border:1px solid #3b82f6;
+
+.start {
+  background: #16a34a;
+  color: white;
+}
+
+.stop {
+  background: #dc2626;
+  color: white;
+}
+
+.clear {
+  background: #374151;
+  color: white;
+}
+
+.speaker {
+  background: #2563eb;
+  color: white;
+}
+
+.speaker.active {
+  outline: 3px solid #93c5fd;
+}
+
+.label {
+  font-size: 13px;
+  color: #9ca3af;
+  margin-bottom: 8px;
+}
+
+.content {
+  font-size: 18px;
+  line-height: 1.5;
+  min-height: 45px;
+}
+
+.say {
+  font-size: 22px;
+  font-weight: bold;
+  line-height: 1.5;
+  color: #86efac;
+}
+
+.next {
+  font-size: 18px;
+  color: #93c5fd;
+}
+
+.transcript {
+  white-space: pre-wrap;
+  line-height: 1.5;
+  color: #d1d5db;
+}
+
+.review {
+  line-height: 1.6;
+  color: #e5e7eb;
+}
+
+.small {
+  color: #9ca3af;
+  font-size: 13px;
 }
 </style>
 </head>
@@ -66,17 +130,33 @@ button{
 
 <div class="container">
 
+<h1>🎧 AI Real Estate Call Coach</h1>
+
+<div class="subtitle">
+Live Wholesaling Call Assistant
+</div>
+
 <div class="card">
 
-<h1>🎧 AI Call Coach</h1>
-
-<div>
-Real Estate Wholesaling Live Coach
-</div>
-
 <div id="status" class="status">
-Ready — Start Listening
+Ready — choose who is speaking and start listening.
 </div>
+
+<div style="text-align:center">
+
+<button class="speaker active" id="sellerBtn"
+onclick="setSpeaker('seller')">
+👤 SELLER / BUYER
+</button>
+
+<button class="speaker" id="meBtn"
+onclick="setSpeaker('me')">
+🧑 ME
+</button>
+
+</div>
+
+<div style="text-align:center;margin-top:10px">
 
 <button class="start" onclick="startListening()">
 🎙️ Start Listening
@@ -92,6 +172,8 @@ Ready — Start Listening
 
 </div>
 
+</div>
+
 
 <div class="card">
 
@@ -99,7 +181,7 @@ Ready — Start Listening
 👤 WHAT THEY SAID
 </div>
 
-<div id="heard" class="box">
+<div id="spokenText" class="content">
 Waiting...
 </div>
 
@@ -112,7 +194,7 @@ Waiting...
 🇸🇴 MEANING
 </div>
 
-<div id="meaning" class="box">
+<div id="meaning" class="content">
 Waiting...
 </div>
 
@@ -125,7 +207,7 @@ Waiting...
 🗣️ ONLY WHAT TO SAY
 </div>
 
-<div id="say" class="box say">
+<div id="say" class="say">
 Waiting...
 </div>
 
@@ -138,7 +220,21 @@ Waiting...
 📝 TRANSCRIPT
 </div>
 
-<div id="transcript" class="box">
+<div id="transcript" class="transcript">
+No conversation yet.
+</div>
+
+</div>
+
+
+<div class="card">
+
+<div class="label">
+📊 CALL REVIEW
+</div>
+
+<div id="review" class="review">
+Your call review will appear here after the conversation.
 </div>
 
 </div>
@@ -150,96 +246,128 @@ Waiting...
 
 let recognition;
 let listening = false;
+let currentSpeaker = "seller";
+
+let conversation = [];
 
 
-function startListening(){
+function setSpeaker(speaker) {
+
+currentSpeaker = speaker;
+
+document.getElementById("sellerBtn")
+.classList.toggle("active", speaker === "seller");
+
+document.getElementById("meBtn")
+.classList.toggle("active", speaker === "me");
+
+if (speaker === "seller") {
+
+document.getElementById("status").innerText =
+"Listening for SELLER / BUYER...";
+
+} else {
+
+document.getElementById("status").innerText =
+"Listening for ME...";
+
+}
+
+}
+
+
+function startListening() {
 
 const SpeechRecognition =
 window.SpeechRecognition ||
 window.webkitSpeechRecognition;
 
-if(!SpeechRecognition){
+if (!SpeechRecognition) {
 
-document.getElementById("status").innerText =
-"Speech recognition is not supported. Use Chrome.";
+alert(
+"Speech recognition is not supported in this browser. Please use Google Chrome."
+);
 
 return;
 }
 
-
 recognition = new SpeechRecognition();
 
-recognition.continuous = true;
-recognition.interimResults = true;
 recognition.lang = "en-US";
 
+recognition.continuous = true;
 
-recognition.onstart = function(){
+recognition.interimResults = true;
+
+recognition.onstart = function() {
 
 listening = true;
 
 document.getElementById("status").innerText =
-"🟢 Listening... Put your call on speakerphone.";
+"🎙️ Listening...";
 
 };
 
 
-recognition.onresult = function(event){
+recognition.onresult = function(event) {
 
-let text = "";
+let finalText = "";
 
-for(let i = event.resultIndex;
+for (
+let i = event.resultIndex;
 i < event.results.length;
-i++){
+i++
+) {
 
-text += event.results[i][0].transcript;
+let text = event.results[i][0].transcript;
+
+if (event.results[i].isFinal) {
+
+finalText += text;
 
 }
 
-if(text.trim()){
+}
 
-coach(text.trim());
+if (finalText.trim() !== "") {
+
+processSpeech(finalText.trim());
 
 }
 
 };
 
 
-recognition.onerror = function(event){
+recognition.onerror = function(event) {
 
 document.getElementById("status").innerText =
-"Error: " + event.error;
+"Microphone error: " + event.error;
 
 };
 
 
-recognition.onend = function(){
+recognition.onend = function() {
 
-if(listening){
+if (listening) {
 
-try{
+try {
 recognition.start();
-}catch(e){}
+} catch(e) {}
 
 }
 
 };
 
-
-try{
-
 recognition.start();
-
-}catch(e){}
 
 }
 
 
-function stopListening(){
+function stopListening() {
 
 listening = false;
 
-if(recognition){
+if (recognition) {
 
 recognition.stop();
 
@@ -251,116 +379,208 @@ document.getElementById("status").innerText =
 }
 
 
-function coach(text){
+function processSpeech(text) {
 
-document.getElementById("heard").innerText =
+if (currentSpeaker === "seller") {
+
+conversation.push({
+speaker: "SELLER / BUYER",
+text: text
+});
+
+document.getElementById("spokenText").innerText =
 text;
 
-document.getElementById("transcript").innerText +=
-text + "\n";
+generateCoachResponse(text);
+
+} else {
+
+conversation.push({
+speaker: "ME",
+text: text
+});
+
+document.getElementById("spokenText").innerText =
+"Your speech: " + text;
+
+document.getElementById("meaning").innerText =
+"Your statement has been added to the call transcript.";
+
+document.getElementById("say").innerText =
+"Continue listening to the seller / buyer.";
+
+}
+
+updateTranscript();
+
+updateReview();
+
+}
 
 
-let t = text.toLowerCase();
+function generateCoachResponse(text) {
+
+let lower = text.toLowerCase();
 
 let meaning =
-"Waxay ka hadlayaan property-ga ama deal-ka.";
+"I understand that the seller / buyer is talking about the property.";
 
 let say =
-"I understand. Can you tell me a little more about the property?";
+"Thanks for explaining that. Can you tell me a little more about the property?";
 
 
-if(
-t.includes("price") ||
-t.includes("asking") ||
-t.includes("want") ||
-t.includes("offer") ||
-t.includes("dollar") ||
-t.includes("$")
-){
+if (
+lower.includes("price") ||
+lower.includes("asking") ||
+lower.includes("want") &&
+lower.includes("dollar")
+) {
 
 meaning =
-"Waxay ka hadlayaan qiimaha property-ga.";
+"They are talking about the price they want for the property.";
 
 say =
-"I understand. Is that price negotiable?";
+"I understand. Is the price negotiable?";
 
 }
 
 
-else if(
-t.includes("repair") ||
-t.includes("condition") ||
-t.includes("roof") ||
-t.includes("damage") ||
-t.includes("fix")
-){
+else if (
+lower.includes("condition") ||
+lower.includes("repair") ||
+lower.includes("needs work")
+) {
 
 meaning =
-"Waxay ka hadlayaan xaaladda guriga iyo repairs-ka.";
+"They are talking about the condition or repairs needed on the property.";
 
 say =
-"Got it. What repairs does the property need?";
+"What repairs does the property need right now?";
 
 }
 
 
-else if(
-t.includes("tenant") ||
-t.includes("rent") ||
-t.includes("rented")
-){
+else if (
+lower.includes("tenant") ||
+lower.includes("rented") ||
+lower.includes("rent")
+) {
 
 meaning =
-"Waxay ka hadlayaan tenant ama kirayste.";
+"They are talking about a tenant or rental situation.";
 
 say =
-"Got it. Is the property currently occupied?";
+"Is the property currently occupied by a tenant?";
 
 }
 
 
-else if(
-t.includes("sell") ||
-t.includes("selling") ||
-t.includes("move") ||
-t.includes("moving")
-){
+else if (
+lower.includes("mortgage") ||
+lower.includes("loan")
+) {
 
 meaning =
-"Waxay ka hadlayaan iibinta property-ga ama sababta ay u iibinayaan.";
+"They are talking about a mortgage or loan on the property.";
 
 say =
-"I understand. What is your timeline for selling?";
+"Is there currently a mortgage or loan on the property?";
 
 }
 
 
-else if(
-t.includes("mortgage") ||
-t.includes("loan") ||
-t.includes("owe") ||
-t.includes("lien")
-){
+else if (
+lower.includes("move") ||
+lower.includes("moving")
+) {
 
 meaning =
-"Waxay ka hadlayaan mortgage ama lacag property-ga lagu leeyahay.";
+"They are talking about moving or their plans for the property.";
 
 say =
-"I understand. About how much is still owed on the property?";
+"When would you ideally like to sell the property?";
 
 }
 
 
-else if(
-t.includes("closing") ||
-t.includes("close")
-){
+else if (
+lower.includes("close") ||
+lower.includes("closing")
+) {
 
 meaning =
-"Waxay ka hadlayaan waqtiga closing-ka.";
+"They are talking about the closing process or timing.";
 
 say =
-"What closing timeline would work for you?";
+"What closing date would work best for you?";
+
+}
+
+
+else if (
+lower.includes("offer")
+) {
+
+meaning =
+"They are talking about an offer.";
+
+say =
+"I understand. Before I talk numbers, can I ask a few questions about the property?";
+
+}
+
+
+else if (
+lower.includes("why") &&
+lower.includes("sell")
+) {
+
+meaning =
+"They are asking about the reason for selling.";
+
+say =
+"I understand. What is the main reason you are considering selling?";
+
+}
+
+
+else if (
+lower.includes("cash")
+) {
+
+meaning =
+"They are talking about a cash purchase or cash offer.";
+
+say =
+"I understand. Are you mainly looking for a quick cash sale?";
+
+}
+
+
+else if (
+lower.includes("agent") ||
+lower.includes("realtor")
+) {
+
+meaning =
+"They are talking about using a real estate agent.";
+
+say =
+"Are you currently working with an agent on the property?";
+
+}
+
+
+else if (
+lower.includes("no") ||
+lower.includes("not interested")
+) {
+
+meaning =
+"They may not be interested in selling right now.";
+
+say =
+"I understand. Would it be okay if I asked what would make a sale worthwhile for you?";
 
 }
 
@@ -374,9 +594,80 @@ say;
 }
 
 
-function clearAll(){
+function updateTranscript() {
 
-document.getElementById("heard").innerText =
+let output = "";
+
+for (let item of conversation) {
+
+if (item.speaker === "SELLER / BUYER") {
+
+output +=
+"👤 SELLER / BUYER:\n" +
+item.text +
+"\n\n";
+
+} else {
+
+output +=
+"🧑 ME:\n" +
+item.text +
+"\n\n";
+
+}
+
+}
+
+document.getElementById("transcript").innerText =
+output;
+
+}
+
+
+function updateReview() {
+
+let sellerCount = 0;
+
+let meCount = 0;
+
+for (let item of conversation) {
+
+if (item.speaker === "SELLER / BUYER") {
+
+sellerCount++;
+
+} else {
+
+meCount++;
+
+}
+
+}
+
+document.getElementById("review").innerHTML =
+
+"<strong>Conversation summary</strong><br><br>" +
+
+"Seller / Buyer statements: " +
+sellerCount +
+"<br>" +
+
+"Your statements: " +
+meCount +
+"<br><br>" +
+
+"<strong>Coach:</strong><br>" +
+
+"Keep asking about motivation, property condition, price, timeline, occupancy, and any mortgage or liens before discussing a final deal.";
+
+}
+
+
+function clearAll() {
+
+conversation = [];
+
+document.getElementById("spokenText").innerText =
 "Waiting...";
 
 document.getElementById("meaning").innerText =
@@ -386,11 +677,18 @@ document.getElementById("say").innerText =
 "Waiting...";
 
 document.getElementById("transcript").innerText =
-"";
+"No conversation yet.";
+
+document.getElementById("review").innerText =
+"Your call review will appear here after the conversation.";
+
+document.getElementById("status").innerText =
+"Ready.";
 
 }
+
 
 </script>
 
 </body>
-  </html>
+</html>
